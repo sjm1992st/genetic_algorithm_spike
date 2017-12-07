@@ -1,0 +1,68 @@
+1 1 1 1 1
+100 0 0 1550
+time1 15.962
+time2 0
+time4 12.328
+Generation No:1
+best result id is 484
+========================
+Score(1),Parameter(2-)
+========================
+0.596800 The best individual
+104.629517 3.893738 3.171692 1596.612549 44.969177 
+
+time3 21.194
+timeAll 37.338
+time1 15.719
+time2 0
+time4 12.331
+Generation No:2
+best result id is 4261
+========================
+Score(1),Parameter(2-)
+========================
+0.159146 The best individual
+140.729538 5.957482 3.393345 1560.446777 36.303661 
+
+time3 17.577
+timeAll 33.468
+time1 16.216
+time2 0
+time4 12.33
+Generation No:3
+best result id is 597
+========================
+Score(1),Parameter(2-)
+========================
+0.159146 The best individual
+140.729538 5.957482 3.393345 1560.446777 36.303661 
+
+time3 17.668
+timeAll 34.048
+time1 15.805
+time2 0
+time4 12.34
+Generation No:4
+best result id is 4496
+========================
+Score(1),Parameter(2-)
+========================
+0.062877 The best individual
+109.352554 4.239314 3.193106 1569.181885 28.871202 
+
+time3 17.318
+timeAll 33.29
+time1 15.9
+time2 0
+time4 12.329
+Generation No:5
+best result id is 3314
+========================
+Score(1),Parameter(2-)
+========================
+0.021367 The best individual
+122.699539 4.984550 3.272842 1579.503906 28.251514 
+
+time3 17.57
+timeAll 33.633
+task1 says: 
