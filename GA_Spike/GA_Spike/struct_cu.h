@@ -1,4 +1,5 @@
-
+#include<vector>
+using namespace std;
 struct M_args
 {
 	float *spike_data;
@@ -21,7 +22,7 @@ struct threadInfo
 	struct M_args_Bound Parameter_Bound[5];
 	double Mtime;//ms
 	double tempVB;//初值
-	double m_I;//电流
+	vector<float> m_I;//电流
 	float gL;
 	float C;//电容
 	int MaxGeneration;

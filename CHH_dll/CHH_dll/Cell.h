@@ -20,12 +20,11 @@ public:
 	float *m_pArray_V;
 
 public:
-	CCell(double start, double Current, double TimeStep, CNa Na_a, CK K_a, CKM KM_a, CKv Kv_a, CCa Ca_a);
+	CCell(double start, double TimeStep, CNa Na_a, CK K_a, CKM KM_a, CKv Kv_a, CCa Ca_a);
 	double CCell::Iterative(double tmp_n, double an, double bn, double TimeStep);
 
 	double  CCell::GetStart();
 	double  CCell::GetTimeStep();
-	double  CCell::GetCurrent();
 	//CStringArray CCell::GetPArray_V();
 
 	~CCell();

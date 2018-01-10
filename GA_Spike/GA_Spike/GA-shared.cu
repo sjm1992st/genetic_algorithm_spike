@@ -75,7 +75,7 @@ __global__ void GAKernel_GenEach(float* population, ScoreWithId* score, curandSt
 	//const float SIGN[2] = { -1.0f, 1.0f };
 	//const float MULT[2] = { 1.0f, 0.0f };
 
-	const int gid = blockDim.x * blockIdx.x + threadIdx.x + THREADS_PER_BLOCK;
+	const int gid = blockDim.x * blockIdx.x + threadIdx.x + THREADS_PER_BLOCK*blockIdx.x;
 	const int tid = threadIdx.x;
 	printf("i_%f ", crossver);
 	// loading initial random population into shared memory
@@ -147,9 +147,6 @@ __global__ void GAKernel_GenEach(float* population, ScoreWithId* score, curandSt
 			float guass = curand_normal(&localState3);
 			for (int i = 0; i < VAR_NUMBER; ++i) {
 				////const float mult = MULT[order < 0.0f];
-				////const float sign = SIGN[order < 0.0f];
-				////sharedPopulation[tid + THREADS_PER_BLOCK][i] += powf(10.0f, order + order_deviation) * sign * mult;
-				///sharedPopulation[tid + THREADS_PER_BLOCK][i] += sharedPopulation[tid + THREADS_PER_BLOCK][i] * order_deviation;
 				////if (sharedPopulation[tid + THREADS_PER_BLOCK][i]>deviceParameter_Bound[i].g[1] || sharedPopulation[tid + THREADS_PER_BLOCK][i] < deviceParameter_Bound[i].g[0])
 				sharedPopulation[tid + THREADS_PER_BLOCK][i] = (deviceParameter_Bound[i].g[0] + deviceParameter_Bound[i].g[1]) / 2 + guass;
 			}
@@ -222,7 +219,7 @@ void printFinalPopulation(float* population, const ScoreWithId* deviceScore, con
 	std::cout << std::endl;
 	//delete population;
 }
-extern "C" float solveGPU(M_args &Parameter_, double Mtime, double tempVB, double TimeStep, double m_I, int FlagParameter[], M_args_Bound Parameter_Bound[], int MaxGeneration, float gL, float C, const int POPULATION_SIZE, float crossver, float mutations, stringstream &strResult) {
+extern "C" float solveGPU(M_args &Parameter_, double Mtime, double tempVB, double TimeStep, vector<float> m_I, int FlagParameter[], M_args_Bound Parameter_Bound[], int MaxGeneration, float gL, float C, const int POPULATION_SIZE, float crossver, float mutations, stringstream &strResult) {
     cudasafe(cudaSetDevice(0), "Could not set device 0");
 	float ans = 0;
 	clock_t start, finish, startMy, finishMy;
@@ -308,9 +305,9 @@ extern "C" float solveGPU(M_args &Parameter_, double Mtime, double tempVB, doubl
 	//void GAKernel_GenEach(float* population, ScoreWithId* score, curandState* randomStates, M_args deviceParameter, M_args_Tset *deviceParameter_Tset, float tau)
 	for (int k = 1; k <=MaxGeneration; k++) 
 	{
+		hDll = LoadLibrary("CHdll.dll");
 		startMy = clock();
 		start = clock();
-		hDll = LoadLibrary("CHdll.dll");
 		int spike_length = int(Mtime / TimeStep);
 		float *temp_data = new float[spike_length*POPULATION_SIZE];
 		HH_return(population, VAR_NUMBER, Mtime, tempVB, TimeStep, m_I, FlagParameter, gL, C, temp_data,POPULATION_SIZE);
@@ -319,7 +316,7 @@ extern "C" float solveGPU(M_args &Parameter_, double Mtime, double tempVB, doubl
 		////for (int j = 0; j < POPULATION_SIZE; j++)
 		////	for (int i = 0; i < spike_length; i++)
 		////		cout << temp_data[j*spike_length+i] << endl;
-			//////////////////
+		//////////////////
 		//#pragma omp parallel for
 		for (int j = 0; j < POPULATION_SIZE; j++)
 		{
@@ -345,6 +342,8 @@ extern "C" float solveGPU(M_args &Parameter_, double Mtime, double tempVB, doubl
 		cudasafe(cudaMemcpy(devicePopulation, population, POPULATION_SIZE * VAR_NUMBER * sizeof(float), cudaMemcpyHostToDevice), "Could not copy population to device");
 
 		start = clock();
+		int A = 0;
+
 		GAKernel_GenEach << <BLOCKS_NUMBER, THREADS_PER_BLOCK >> >(devicePopulation, deviceScore, randomStates, deviceParameter_, deviceParameter_Tset, tau, k, MaxGeneration, deviceParameter_Bound, POPULATION_SIZE, crossver, mutations);
 		//delete[]population;
 		finish = clock();
@@ -371,14 +370,14 @@ extern "C" float solveGPU(M_args &Parameter_, double Mtime, double tempVB, doubl
 			return 0;
 		}
 		//////////////////////
-		while (MFlage == 2){}
-		MFlage = 1;
+		///mtx.lock();
 		start = clock();
 		ans = FinallResult(k, tau, population, Mtime, tempVB, TimeStep, m_I, Parameter_, FlagParameter, gL, C, Parameter_Bound, POPULATION_SIZE, strResult);
 		finish = clock();
 		duration = (double)(finish - start) / CLOCKS_PER_SEC;
 		cout << "time3 " << duration << endl;
-		MFlage = 3;
+		//MFlage = 3;
+		///mtx.unlock();
 		cudasafe(cudaFree(deviceScore), "Failed to free deviceScore");
 		FreeLibrary(hDll);
 		finishMy = clock();

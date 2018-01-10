@@ -3,7 +3,7 @@
 #include "K.h"
 #include "Na.h"
 
-CCell::CCell(double start, double Current, double TimeStep, CNa Na_a, CK K_a, CKM KM_a, CKv Kv_a, CCa Ca_a)
+CCell::CCell(double start, double TimeStep, CNa Na_a, CK K_a, CKM KM_a, CKv Kv_a, CCa Ca_a)
 {
 	m_start = start;
 	CNa_a = Na_a;
@@ -12,7 +12,6 @@ CCell::CCell(double start, double Current, double TimeStep, CNa Na_a, CK K_a, CK
 	CKv_a = Kv_a;
 	CCa_a = Ca_a;
 	//m_pArray_V = pArray_V;
-	m_Current = Current;
 	m_TimeStep = TimeStep;
 }
 double CCell::Iterative(double tmp_n, double an, double bn, double TimeStep)
@@ -33,11 +32,7 @@ double  CCell::GetTimeStep()
 	double 	 TimeStep = m_TimeStep;
 	return TimeStep;
 }
-double  CCell::GetCurrent()
-{
-	double 	 Current = m_Current;
-	return Current;
-}
+
 
 
 //CSynapse  CCell::GetSyn_a()

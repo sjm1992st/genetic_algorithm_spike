@@ -6,21 +6,25 @@
 #include <algorithm>
 #include <map>
 #include "omp.h"
+#include <mutex> 
+
 using namespace std;
 
-typedef void(*AddFunc)(float *population, double Mtime, double tempVB, double TimeStep, double m_I, int FlagParameter[], float gL, float C, float *pArrayA, int POPULATION_SIZE);
+
+typedef void(*AddFunc)(float *population, double Mtime, double tempVB, double TimeStep, float* m_I, int FlagParameter[], float gL, float C, float *pArrayA, int POPULATION_SIZE);
 //HMODULE hDll = LoadLibrary("CHdll.dll");
 HMODULE hDll;
 ///extern "C" _declspec(dllimport) void HH_Entrance(float gNa, float gK, float gKM, float gKv, float gCa, double Mtime, double tempVB, double TimeStep, double m_I, int FlagParameter[], float gL, float C, float *Array_Data);
 #define CLOCKS_PER_SEC ((clock_t)1000) 
 //#pragma comment(lib,"CHH_dll.lib")
 const double KNOWN_ANSWER = 0;
-const int THREADS_PER_BLOCK = 1024;
+const int THREADS_PER_BLOCK = 512;
  // should be a multiple of block size and POPULATION_SIZE>THREADS_PER_BLOCK
 const unsigned U_RAND_MAX = static_cast<unsigned>(RAND_MAX) + 1;
 const int VAR_NUMBER = 5;
 float best_population[VAR_NUMBER];
 float best_score = 1000;
+
 //////const char *pStrPipeName = "\\\\.\\pipe\\Name_pipe_demon_get";
 //////const int BUFFER_MAX_LEN = 1024;
 //////char buf[BUFFER_MAX_LEN];
@@ -33,12 +37,13 @@ bool cmp(const pair<int, float> &p1, const pair<int, float> &p2)//要用常数，不然
 //vector<pair<int, int>> vtMap;
 double  duration;
 extern vector<vector<float>> mdata_g;
-extern vector<float> mdata_score;
+extern vector<vector<float>> mdata_score;
 extern vector<float> mdata_time;
 extern int MFlage;
 extern int m_gen;
 extern double  durationMy;
 extern bool myexit;
+extern std::mutex mtx;
 void convert_data_two(vector<float> tmp, float* data)
 {
 	for (int i = 0; i < tmp.size(); i++)
@@ -71,10 +76,11 @@ struct M_args_Tset
 
 
 //function HH_return for test
-void HH_return(float *List_param, int VAR_NUMBER, double Mtime, double tempVB, double TimeStep, double m_I, int FlagParameter[], float gL, float C, float *Array_Data, int POPULATION_SIZE)
+void HH_return(float *List_param, int VAR_NUMBER, double Mtime, double tempVB, double TimeStep, vector<float> m_I, int FlagParameter[], float gL, float C, float *Array_Data, int POPULATION_SIZE)
 {
 	//float *Array_Data = new float[int(Mtime / TimeStep)];
 	//HMODULE hDll = LoadLibrary("CHH_dll.dll");
+	
 	if (myexit) return;
 	if (hDll != NULL)
 	{
@@ -83,8 +89,12 @@ void HH_return(float *List_param, int VAR_NUMBER, double Mtime, double tempVB, d
 		{
 			//printf("aa %f %f\n", List_param[0], List_param[1]);
 			//HH_Entrance(120, 36, 100, -69, 0.01, 10);
-			HH_Entrance(List_param, Mtime, tempVB, TimeStep, m_I, FlagParameter, gL, C, Array_Data, POPULATION_SIZE);
+			float *pI = new float[m_I.size()];
+			for (int i = 0; i < m_I.size(); i++)
+				pI[i] = m_I[i];
+			HH_Entrance(List_param, Mtime, tempVB, TimeStep, pI, FlagParameter, gL, C, Array_Data, POPULATION_SIZE);
 			//Array_Data = (float*)HH_Entrance(120, 36, Mtime, tempVB, TimeStep, m_I);
+			delete pI;
 			
 		}
 		else
@@ -93,6 +103,7 @@ void HH_return(float *List_param, int VAR_NUMBER, double Mtime, double tempVB, d
 				printf("not find dll");
 			}
 		}
+		
 		//FreeLibrary(hDll);
 	}
 	else
@@ -175,7 +186,7 @@ float fitness_B(M_args deviceParameter, M_args_Tset deviceParameter_Tset, float 
 }
 
 
-float FinallResult(int Generation, float tau, float *population, double Mtime, double tempVB, double TimeStep, double m_I, M_args &Parameter_, int FlagParameter[], float gL, float C, M_args_Bound Parameter_Bound[], const int POPULATION_SIZE, stringstream &strResult){
+float FinallResult(int Generation, float tau, float *population, double Mtime, double tempVB, double TimeStep, vector<float> m_I, M_args &Parameter_, int FlagParameter[], float gL, float C, M_args_Bound Parameter_Bound[], const int POPULATION_SIZE, stringstream &strResult){
 	ScoreWithId *score = new ScoreWithId[POPULATION_SIZE];
 	float *population_tmp = new float[POPULATION_SIZE*VAR_NUMBER];
 	M_args_Tset *Parameter_Tmp = new M_args_Tset[POPULATION_SIZE];
@@ -183,19 +194,24 @@ float FinallResult(int Generation, float tau, float *population, double Mtime, d
 	float score_max = 0;
 	int index = 0;
 	int max_index = 0;
-	mdata_score.clear();
+	//mdata_score.clear();
 	mdata_g.clear();
+	vector<float>tmp_score;
 	int size = int(Mtime / TimeStep);
 	m_gen = Generation;
 	clock_t start, finish;
 	string name1= "str_g_" + to_string(Generation)+".txt";
 	string name2 = "str_score_" + to_string(Generation) + ".txt";
+	string name3 = "str_5dim_" + to_string(Generation) + ".txt";
 	const char * mystr = name1.c_str();
 	const char * mystr_score = name2.c_str();
+	const char * mystr_5dim = name3.c_str();
 	ofstream outf;
 	ofstream outf2;
+	ofstream outf3;
 	outf.open(mystr);
 	outf2.open(mystr_score);
+	outf3.open(mystr_5dim);
 	//std::cout << Parameter_Bound[0].g[0] << ' ' << Parameter_Bound[0].g[1] << ' ' << Parameter_Bound[1].g[0] << ' ' << Parameter_Bound[1].g[1] << endl;
 	vector<int> tmp_param;
 	vector<int> max_id;
@@ -282,7 +298,7 @@ float FinallResult(int Generation, float tau, float *population, double Mtime, d
 
 			score[j].score = fitness_B(Parameter_, Parameter_Tmp[j], tau);
 			outf2 << score[j].score << endl;
-			mdata_score.push_back(score[j].score);
+			tmp_score.push_back(score[j].score);
 			index_mScore[j] = score[j].score;
 			if (score[j].score < score_min)
 			{
@@ -296,12 +312,13 @@ float FinallResult(int Generation, float tau, float *population, double Mtime, d
 				max_id.push_back(max_index);
 			}
 		}
+	mdata_score.push_back(tmp_score);
 	delete temp_data;
 	for (int j = 0; j < POPULATION_SIZE; j++)
 	{
 		int indexm;
 		int ind_score = 1000;
-		for (int i = 0; i <10; i++)
+		for (int i = 0; i <POPULATION_SIZE*0.002; i++)
 		{
 			int first = POPULATION_SIZE*(static_cast<float>(rand())) / (U_RAND_MAX);
 			if (score[first].score < ind_score)
@@ -399,10 +416,15 @@ float FinallResult(int Generation, float tau, float *population, double Mtime, d
 	////for (int j = 0; j < size; j++)
 	////	printf("   %f \n", temp_data[j]);
 	for (int i = 0; i < POPULATION_SIZE; i++)
-		for (int j = 0; j < VAR_NUMBER; j++)
 	{
+		for (int j = 0; j < VAR_NUMBER; j++)
+		{
 			population[i*VAR_NUMBER + j] = population_tmp[i*VAR_NUMBER + j];
+			outf3 << population[i*VAR_NUMBER + j] << " ";
+		}
+		outf3 << endl;
 	}
+	outf3.close();
 	delete population_tmp;
 	for (int jk = 0; jk < POPULATION_SIZE; jk++)
 		delete Parameter_Tmp[jk].spike_TestData;
