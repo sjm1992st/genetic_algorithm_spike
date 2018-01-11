@@ -10,7 +10,7 @@
 
 using namespace std;
 
-
+///void HH_Entrance(float *population, double Mtime, double tempVB, double TimeStep, float* m_I, int FlagParameter[], float gL, float C, float *pArrayA, int POPULATION_SIZE);
 typedef void(*AddFunc)(float *population, double Mtime, double tempVB, double TimeStep, float* m_I, int FlagParameter[], float gL, float C, float *pArrayA, int POPULATION_SIZE);
 //HMODULE hDll = LoadLibrary("CHdll.dll");
 HMODULE hDll;
@@ -104,7 +104,7 @@ void HH_return(float *List_param, int VAR_NUMBER, double Mtime, double tempVB, d
 			}
 		}
 		
-		//FreeLibrary(hDll);
+		FreeLibrary(hDll);
 	}
 	else
 	{
@@ -112,10 +112,10 @@ void HH_return(float *List_param, int VAR_NUMBER, double Mtime, double tempVB, d
 			printf("not find dll");
 		}
 	}
-	//for (int i = 0; i < int(Mtime) * 100; i++)
-	//{
-	//	printf("%f\n", Array_Data[i]);
-	//}
+	for (int i = 0; i < int(Mtime) * 100; i++)
+	{
+		printf("%f\n", Array_Data[i]);
+	}
 	////////////////
 }
 
@@ -198,7 +198,7 @@ float FinallResult(int Generation, float tau, float *population, double Mtime, d
 	mdata_g.clear();
 	vector<float>tmp_score;
 	int size = int(Mtime / TimeStep);
-	m_gen = Generation;
+	
 	clock_t start, finish;
 	string name1= "str_g_" + to_string(Generation)+".txt";
 	string name2 = "str_score_" + to_string(Generation) + ".txt";
@@ -281,11 +281,14 @@ float FinallResult(int Generation, float tau, float *population, double Mtime, d
 			outf << endl;
 			mdata_g.push_back(temp_mdata_g);
 		}
+	    
 		start = clock();
+		hDll = LoadLibrary("CHdll.dll");
 		int spike_length = int(Mtime / TimeStep);
 		float *temp_data = new float[spike_length*POPULATION_SIZE];
 		HH_return(population, VAR_NUMBER, Mtime, tempVB, TimeStep, m_I, FlagParameter, gL, C, temp_data, POPULATION_SIZE);
 		finish = clock();
+		FreeLibrary(hDll);
 		duration = (double)(finish - start) / CLOCKS_PER_SEC;
 		cout << "time4 " << duration << endl;
 		for (int j = 0; j < POPULATION_SIZE; j++)
@@ -432,5 +435,6 @@ float FinallResult(int Generation, float tau, float *population, double Mtime, d
 	delete Parameter_Tmp;
 	float finscore = score[index].score;
 	delete score;
+	
 	return finscore;
 }

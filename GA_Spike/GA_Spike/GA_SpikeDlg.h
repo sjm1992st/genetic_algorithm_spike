@@ -21,7 +21,7 @@
 #include"ChartCtrl_source\ChartXYSerie.h"
 #include"ChartCtrl_source\ChartLineSerie.h"
 #include"ChartCtrl_source\ChartPointsSerie.h"
-#include "H:\genetic_algorithm_spike\GA_Spike\GA_Spike\ChartCtrl_source\ChartCtrl.h"
+#include "H:\genetic_algorithm_spike-master\genetic_algorithm_spike\GA_Spike\GA_Spike\ChartCtrl_source\ChartCtrl.h"
 // CGA_SpikeDlg ¶Ô»°¿ò
 
 

@@ -442,8 +442,8 @@ void CGA_SpikeDlg::OnBnClickedButtonRun()
 		MessageBox("There is no device");
 	}
 	/////////////////////////
-	////threadNew();
-	////threadNew2();
+	threadNew();
+	threadNew2();
 	/////////////////////////////
 	//SetTimer(1, 1000, NULL);
 	//////const int VAR_NUMBER = 5;
@@ -885,15 +885,16 @@ void CGA_SpikeDlg::OnTimer(UINT_PTR nIDEvent)
 		{	
 
 						  //cout << m_gen << endl;
-			///mtx.lock();
+			mtx.lock();
 			//cout << m_gen << endl;
-			if (mdata_g.size() > 0)
+			if (mdata_g.size() > 0 && mdata_score.size()>0)
 			{
 				DrawPictureB(mdata_g, mdata_score, Info);
 				DrawPictureA(mdata_score);
 				DrawPictureC(durationMy);
+				mdata_g.clear();
 			}
-			///mtx.unlock();
+			mtx.unlock();
 			break;
 		}
 		case 2:   //定时器2处理函数
@@ -909,6 +910,7 @@ void CGA_SpikeDlg::OnTimer(UINT_PTR nIDEvent)
 					pos += 1000 / (10*CLOCKS_PER_SEC*durationMy*(m_MaxGeneration-m_gen));
 				
 				m_progress.SetPos(pos);
+				break;
 			//}
 
 		}
